@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+
+<!-- #4. 암호화 인코딩 빈 등록 : BCryptPasswordEncoder -->
+<beans:bean id="bcryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+
+	<!-- #5. 권한체크 설정 -->
+	<http security="none" pattern="/resources/**"/> <!-- 정적파일은 권한 검사 제외 -->
+	<http auto-config="true"> <!-- auto-config="true" : 자질구레한 설정 자동으로 해줌 -->
+		<intercept-url pattern="/" access="permitAll"/>
+		<intercept-url pattern="/index.jsp" access="permitAll"/><!-- forward로 가는거라 등록 -->
+		<intercept-url pattern="/member/memberLogin.do" access="isAnonymous()"/> <!-- 인증 전에만 접근 가능 -->
+		<intercept-url pattern="/member/memberLoginProcess.do" access="isAnonymous()"/> <!-- 인증 전에만 접근 가능 -->
+		<intercept-url pattern="/admin/**" access="hasRole('ADMIN')"/><!-- admin관련 -->
+		<intercept-url pattern="/**" access="hasRole('USER')"/>
+		<!-- 
+		login-page : 로그인 폼 페이지 요청 (GET같은거)
+		login-processing-url : 로그인 폼 제출 페이지. 핸들러작성 필요없음 (login-page랑 같은 url이어도 됨) (POST같은거)
+		username-parameter / password-parameter
+			:제출폼에서 id/pwdㅔ 해당하는 name값이 username/password가 아닌 경우에만 작성
+		 -->
+		<form-login
+			login-page="/member/memberLogin.do"
+			login-processing-url="/member/memberLoginProcess.do"
+			username-parameter="id"
+			password-parameter="password"/>
+		<!-- 
+			invalidate-session : 세션무효화
+			delete-cookie : 특정 쿠키를 지정해서 지울 수 있음
+			logout-seccess-url : 로그아웃 시 리다이렉트 될 주소
+		 -->
+		<logout
+			logout-url="/member/memberLogout.do"
+			invalidate-session="true"
+			delete-cookies=""
+			logout-success-url="/"/>
+			
+		<!-- remember-me : session-timeout시간 이상으로 사용자 정보를 관리할 수 있는 옵션
+		
+			data-source-ref : datasour 빈 연결 (root-context에 등록한 dataSource빈 연결)
+			token-validity-seconds : remember-me 토큰 유효시간(초단위)(60*60*24*14 - 2주)
+		 -->
+		<remember-me
+			data-source-ref="dataSource"
+			token-validity-seconds="1209600"/>
+			
+		<!-- 권한 없는 페이지 접근 시 처리 -->
+		<access-denied-handler error-page="/error/accessDenied.do"/>
+	</http>
+	
+	<!-- #6. 인증/권한 검사 manager빈 설정 -->
+	<authentication-manager>
+		<!-- securityService빈 등록 -->
+		<authentication-provider user-service-ref="securityService">
+			<password-encoder ref="bcryptPasswordEncoder"/>
+			<!-- <user-service>
+				유저 임시로 등록. id: honggd, pw: 1234 authorities:권한
+				권한 이름은 자유롭게 만들 수 있음
+				<user 
+					name="honggd" 
+					password="$2a$10$6wLRctSpj6rDSkoDPNdUSeN3mO/lfhAJzD083EZ13sVgT/gPyMeUa" 
+					authorities="ROLE_USER"/>
+				<user 
+					name="admin" 
+					password="$2a$10$6wLRctSpj6rDSkoDPNdUSeN3mO/lfhAJzD083EZ13sVgT/gPyMeUa" 
+					authorities="ROLE_USER,ROLE_ADMIN"/>
+			</user-service> -->
+		</authentication-provider>
+	</authentication-manager>
+	
+	<!-- #7. UserDetails구현체 빈등록 -->
+	<!--  base-package하위의 어노테이션을 검색/처리 @Component, @Autowired, @Controller, @Service, ... -->
+	<context:component-scan base-package="com.kh.spring.security" />
+
+</beans:beans>

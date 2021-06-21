@@ -87,7 +87,7 @@ public class BoardController {
 	@PostMapping("/boardEnroll.do")
 	public String boardEnroll(
 						@ModelAttribute BoardExt board,
-						@RequestParam(name = "upFile") MultipartFile[] upFiles,
+						@RequestParam(name = "upFile", required=true) MultipartFile[] upFiles,
 						RedirectAttributes redirectAttr
 						) throws IOException {
 		try {

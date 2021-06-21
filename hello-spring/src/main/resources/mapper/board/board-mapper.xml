@@ -96,6 +96,21 @@
 	order by no desc
 </select>
 
+<!-- 2021.06.14 시험용 임시쿼리 -->
+<!-- <select id="searchNotice" resultMap="resultNotice">
+	select *
+	from notice
+	<where>
+	<if test="ntitle != null">
+		ntitle like '%' || #{keyword} || '%'
+	</if>
+	<if test="ncontent != null">
+	</if>
+		and ncontent like '%' || #{keyword} || '%'
+	</where>
+	order by nno desc
+</select> -->
+<!--  -->
 
 
 <resultMap type="boardExt" id="boardCollectionMap">

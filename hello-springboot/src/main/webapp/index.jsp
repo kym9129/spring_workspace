@@ -201,6 +201,7 @@ div.result{width:70%; margin:0 auto;}
 		</form>
 		<hr />
 		<form id="menuUpdateFrm">
+			<input type="hidden" name="id" value="" />
 			<input type="text" name="restaurant" placeholder="음식점" class="form-control" />
 			<br />
 			<input type="text" name="name" placeholder="메뉴" class="form-control" />
@@ -231,26 +232,43 @@ div.result{width:70%; margin:0 auto;}
 			e.preventDefault();
 
 			const id = Number($("[name=id]").val());
+			/*
+			e.target하위의 선택자를 조회 (컨텍스트)
+			$("[name=id]", e.target).val()
+			*/
+			if(!id) return;
 			console.log(id);
-
-			let restaurant = "";
-			let name = "";
-			let price = 0;
 
 			$.ajax({
 				url: `${pageContext.request.contextPath}/menu/\${id}`,
 				success(data){
 					console.log(data);
-					restaurant = data.restaurant;
-					name = data.name;
-					price = data.price;
+
+					if(data){
+						const $frm = $("#menuUpdateFrm");
+						const {id, restaurant, name, price, type, taste} = data; //구조분해할당. ES6문법
+						
+						$frm.find("[name=id]").val(id);
+						$frm.find("[name=restaurant]").val(restaurant);
+						$frm.find("[name=name]").val(name);
+						$frm.find("[name=price]").val(price);
+
+						//name과 value가 같으면 checked속성 true
+						$frm.find(`[name=type][value=\${type}]`).prop("checked", true);
+						$frm.find(`[name=taste][value=\${taste}]`).prop("checked", true);
+						
+					}
+					/* else{
+						alrt("해당 메뉴가 존재하지 않습니다.");
+						$("[name=id]", e.target).select(); // 사용자가 다시 입력할 수 있도록
+					} */
 				},
-				error: console.log,
-				complete(){
-					const $frm = $("#menuUpdateFrm");
-					$frm.find("[name=restaurant]").val(restaurant);
-					$frm.find("[name=name]").val(name);
-					$frm.find("[name=price]").val(price);
+				error(xhr, statusText, err){
+				//status code를 이용해서 에러처리
+					console.log(xhr, statusText, err);
+					const {status} = xhr;
+					status == 404 && alrt("해당 메뉴가 존재하지 않습니다.");
+					$("[name=id]", e.target).select(); // 사용자가 다시 입력할 수 있도록
 				}
 			});
 				
@@ -259,13 +277,13 @@ div.result{width:70%; margin:0 auto;}
 		$("#menuUpdateFrm").submit(e => {
 			e.preventDefault();
 
-			const id = Number($("[name=id]").val());
+			/* const id = Number($("[name=id]").val());
 			const $frm = $(e.target);
 			const restaurant = $frm.find("[name=restaurant]").val();
 			const name = $frm.find("[name=name]").val();
 			const price = Number($frm.find("[name=price]").val());
-			const type = $frm.find("[name=type]").val();
-			const taste = $frm.find("[name=taste]").val();
+			const type = $frm.find("[name=type]:checked").val();
+			const taste = $frm.find("[name=taste]:checked").val();
 
 			const menu = {
 						id,
@@ -274,29 +292,87 @@ div.result{width:70%; margin:0 auto;}
 						price,
 						type,
 						taste
-					};
+					}; */
+
+			//formData를 활용해서 객체 만들기
+			const frmData = new FormData(e.target);
+			const menu = {};
+			frmData.forEach((value, key) =>{
+			//frmData에 key value가 있지만 숨어있어서 JSON처리가 안됨. 그래서 menu 객체에 옮겨담는다.
+				menu[key] = value;
+			})
+
 			console.log(menu);
 
 			$.ajax({
-				url: `${pageContext.request.contextPath}/menu/\${id}`,
+				//id를 menu객체에서 꺼내욤
+				url: `${pageContext.request.contextPath}/menu/\${menu.id}`,
 				data: JSON.stringify(menu),
 				contentType: "application/json; charset=utf-8",
 				method: "PUT",
 				success(data){
 					console.log(data);
+					const {msg} = data; //data객체에서 msg속성 꺼내기
 				},
 				error: console.log,
 				complete(){
-					e.target.reset();
+					$("#menuSearchFrm")[0].reset();
+					$("#menuUpdateFrm")[0].reset();
+					/*
+					reset()메소드는 Vanila JS메소드임
+					JS메소드를 사용하기 위해 jQuery객체의 [0]번지인 js체에 대해 reset을 사용
+					
+					$("#menuSearchFrm") : jQuery객체
+					$("#menuSearchFrm"[0]) : JS객체
+					*/
+					//
 				}
 			
-				});
-			
+			});
 		});
-
-
-		
 	</script>
+	
+	<!-- 4. 삭제 DELETE /menu/123 -->    
+	<div class="menu-test">
+    	<h4>메뉴 삭제하기(DELETE)</h4>
+    	<p>메뉴번호를 사용해 해당메뉴정보를 삭제함.</p>
+    	<form id="menuDeleteFrm">
+    		<input type="text" name="id" placeholder="메뉴번호" class="form-control" /><br />
+    		<input type="submit" class="btn btn-block btn-outline-danger btn-send" value="삭제" >
+    	</form>
+    </div>
+    <script>
+	$("#menuDeleteFrm").submit(e => {
+		e.preventDefault();
+
+		const id = $("[name=id]", e.target).val();
+
+		if(!id) return; //id값이 없다면 조기리턴
+
+		$.ajax({
+			url: `${pageContext.request.contextPath}/menu/\${id}`,
+			method: "DELETE",
+			success(data){
+				console.log(data);
+			},
+			error(xhr, statusText, err){
+				//status code로 에러처리
+				console.log(xhr, statusText, err);
+				const {status} = xhr;
+				switch(status){
+				case 404: alert("존재하지 않는 메뉴번호입니다");
+				case 200: alert("")
+				}
+
+				
+				$("[name=id]", e.target).select();
+			},
+			complete(){
+				$(e.target)[0].reset();
+			}
+		});
+	})
+    </script>
 	
 	
 	</div>

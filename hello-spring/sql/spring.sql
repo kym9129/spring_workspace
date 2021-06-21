@@ -52,6 +52,9 @@ create table member(
 		member;
         
 update member
+set password = '$0rfuha98mSG3HTfGpLO4be6TowzoMQWJYa34tZHG0KbcAcR7O0eM6';
+        
+update member
 set password = '$2a$10$QVSpHRbhcqutuhoF0HvO3.gkQNiU9Lm0baAiCMVnr3y3JAoC0s9fK'
 where id = 'honggd';
 
@@ -127,6 +130,8 @@ order by
 	    left join attachment a
 	    on b.no = a.board_no
 	where b.no = 61;
+    
+    select * from member;
 
 
 insert into attachment

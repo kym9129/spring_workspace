@@ -46,3 +46,28 @@
 	</delete>
   
 </mapper>
+
+<!-- 2021.06.14 시험용 임시 쿼리 -->
+<!-- <mapper namespace="deptmapper">
+	<select id="selectList" resultType="deptDto">
+		select deptno, dname, loc
+		from dept
+	</select>
+</mapper> -->
+
+<!-- 2021.06.15 시험용 임시 쿼리 -->
+<select id="findActiveBlogLike" resultType="Blog">
+	select * from blog
+	where state = 'ACTIVE'
+	<choose>
+		<when test="title != null">
+			and title like '%' || #{title} || '%'
+		</when>
+		<when test="author != null and author.name != null">
+			and author like '%' || #{author.name} || '%'
+		</when>
+		<otherwise>
+			featured == 1
+		</otherwise>
+	</choose>
+</select>

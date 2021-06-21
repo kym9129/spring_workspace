@@ -54,6 +54,11 @@
 			id = #{id}
 			
 	</update>
+	
+	<delete id="deleteMenu">
+		delete from menu
+		where id = #{id}
+	</delete>
   
   <resultMap type="menu" id="menuMap">
   	<result column="type" property="type" typeHandler="menuTypeHandler"/>
